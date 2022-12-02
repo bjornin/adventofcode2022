@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let input = fs::read_to_string("1/input.txt").unwrap();
+    let input = fs::read_to_string("day1/input.txt").unwrap();
     let res = parse(&input);
     println!("{}", res.max());
     println!("{}", res.sum());
