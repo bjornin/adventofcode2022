@@ -1,6 +1,6 @@
 use std::fs;
 use std::collections::{HashMap, HashSet};
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 fn main() {
     let input = fs::read_to_string("day9/input.txt").unwrap();
@@ -27,6 +27,17 @@ impl Add for Coord {
         Coord {
             x: self.x + other.x,
             y: self.y + other.y,
+        }
+    }
+}
+
+impl Sub for Coord {
+    type Output = Coord;
+
+    fn sub(self, other: Coord) -> Coord {
+        Coord {
+            x: self.x - other.x,
+            y: self.y - other.y,
         }
     }
 }
@@ -59,7 +70,32 @@ fn one(input: &str) -> usize {
 }
 
 fn two(input: &str) -> usize {
-    36
+    let mut tail: Vec<Coord> = vec![Coord{x: 0, y: 0}; 10];
+    let mut t_visit: HashSet<Coord> = HashSet::new();
+    t_visit.insert(*tail.last().unwrap());
+    let dir = HashMap::from([
+        ("R", Coord{x: 1, y: 0}),
+        ("L", Coord{x: -1, y: 0}),
+        ("U", Coord{x: 0, y: 1}),
+        ("D", Coord{x: 0, y: -1}),
+    ]);
+    
+    for line in input.lines() {
+        let d = line.split_whitespace().collect::<Vec<&str>>();
+        let direction = *dir.get(d[0]).unwrap();
+        let steps = d[1].parse::<i32>().unwrap();
+        for _ in 0..steps {
+            tail[0] = tail[0] + direction;
+            for i in 1..tail.len() {
+                if tail[i - 1].distance(tail[i]) > 1 {
+                    let m = tail[i - 1] - tail[i];
+                    tail[i] = tail[i] + Coord{x: m.x.signum(), y: m.y.signum()};
+                }
+            }
+            t_visit.insert(*tail.last().unwrap());
+        }
+    }
+    t_visit.len()
 }
 
 #[cfg(test)]
@@ -94,7 +130,7 @@ U 20
 ";
     #[test]
     fn test_two() {
-        assert_eq!(two(INPUT), 0);
+        assert_eq!(two(INPUT), 1);
         assert_eq!(two(INPUT2), 36);
     }
 }
