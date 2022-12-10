@@ -1,4 +1,6 @@
-use std::{fs, collections::HashSet};
+use std::fs;
+use std::collections::{HashMap, HashSet};
+use std::ops::Add;
 
 fn main() {
     let input = fs::read_to_string("day9/input.txt").unwrap();
@@ -6,64 +8,51 @@ fn main() {
     println!("{}", two(&input));
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
-struct Coord(i32, i32);
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+struct Coord {
+    x: i32,
+    y: i32,
+}
 
-fn update_t(t: Coord, h: Coord) -> Coord {
-    let mut x = t.0;
-    let mut y = t.1;
-    let dx = h.0 - t.0;
-    let dy = h.1 - t.1;
-    if dx.abs() + dy.abs() > 2 {
-        x += dx / dx.abs();
-        y += dy / dy.abs();
-    } else if !(-1..=1).contains(&dx) {
-        x += dx / dx.abs();
-    } else if !(-1..=1).contains(&dy) {
-        y += dy / dy.abs();
+impl Coord {
+    fn distance(self, other: Coord) -> i32 {
+        ((self.x - other.x).abs()).max((self.y - other.y).abs())
     }
-    Coord(x, y)
+}
+
+impl Add for Coord {
+    type Output = Coord;
+
+    fn add(self, other: Coord) -> Coord {
+        Coord {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
 }
 
 fn one(input: &str) -> usize {
-    let mut h_pos: Coord = Coord(0,0);
-    let mut t_pos: Coord = Coord(0,0);
+    let mut head: Coord = Coord{x: 0, y: 0};
+    let mut tail: Coord = Coord{x: 0, y: 0};
     let mut t_visit: HashSet<Coord> = HashSet::new();
-    t_visit.insert(t_pos);
+    t_visit.insert(tail);
+    let d = HashMap::from([
+        ("R", Coord{x: 1, y: 0}),
+        ("L", Coord{x: -1, y: 0}),
+        ("U", Coord{x: 0, y: 1}),
+        ("D", Coord{x: 0, y: -1}),
+    ]);
     
     for line in input.lines() {
         let dir = line.split_whitespace().collect::<Vec<&str>>();
         let steps = dir[1].parse::<i32>().unwrap();
-        match dir[0] {
-            "R" => {
-                for _ in 0..steps {
-                    h_pos = Coord(h_pos.0 + 1, h_pos.1);
-                    t_pos = update_t(t_pos, h_pos);
-                    t_visit.insert(t_pos);
-                }
+        for _ in 0..steps {
+            let new_head = head + *d.get(dir[0]).unwrap();
+            if new_head.distance(tail) > 1 {
+                tail = head;
+                t_visit.insert(tail);
             }
-            "L" => {
-                for _ in 0..steps {
-                    h_pos = Coord(h_pos.0 - 1, h_pos.1);
-                    t_pos = update_t(t_pos, h_pos);
-                    t_visit.insert(t_pos);
-                }
-            }
-            "U" => {
-                for _ in 0..steps {
-                    h_pos = Coord(h_pos.0, h_pos.1 + 1);
-                    t_pos = update_t(t_pos, h_pos);
-                    t_visit.insert(t_pos);
-                }
-            }
-            "D" => {
-                for _ in 0..steps {
-                    h_pos = Coord(h_pos.0, h_pos.1 - 1);
-                    t_pos = update_t(t_pos, h_pos);
-                    t_visit.insert(t_pos);
-                }
-            }
-            &_ => println!("odd move")
+            head = new_head;
         }
     }
     t_visit.len()
