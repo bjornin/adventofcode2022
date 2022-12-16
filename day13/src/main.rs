@@ -7,7 +7,7 @@ use std::iter::zip;
 fn main() {
     let input = fs::read_to_string("day13/input.txt").unwrap();
     println!("{}", one(&input));
-    // println!("{}", two(&input));
+    println!("{}", two(&input));
 }
 
 #[derive(Clone, Debug)]
@@ -153,9 +153,19 @@ fn one(input: &str) -> usize {
         .map(|(i, _)| i + 1).sum()
 }
 
-// fn two() -> usize {
+fn two(input: &str) -> usize {
+    let mut packets: Vec<Packet> = input.trim()
+        .split_whitespace()
+        .map(|t| parse(&mut t.chars()))
+        .collect();
+    let a = parse(&mut "[[2]]".chars());
+    let b = parse(&mut "[[6]]".chars());
+    packets.push(a.clone());
+    packets.push(b.clone());
+    packets.sort();
 
-// }
+    packets.into_iter().enumerate().filter(|(_, t)| t == &a || t == &b).map(|(i, _)| i + 1).product()
+}
 
 #[cfg(test)]
 mod tests {
@@ -296,8 +306,8 @@ const TT: &str = "\
         }
     }
 
-    // #[test]
-    // fn test_two() {
-    //     assert_eq!(two(INPUT), )
-    // }
+    #[test]
+    fn test_two() {
+        assert_eq!(two(INPUT), 140)
+    }
 }
