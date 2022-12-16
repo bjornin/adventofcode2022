@@ -14,14 +14,24 @@ fn main() {
 enum Packet {
     List(Vec<Packet>),
     Num(u8),
+    Nil,
 }
 
 impl Ord for Packet {
     fn cmp(&self, other: &Self) -> Ordering {
         match self {
+            Packet::Nil => match other {
+                Packet::Nil => Equal,
+                Packet::Num(_) => Ordering::Less,
+                Packet::List(_) => {
+                    let mut v = Vec::new();
+                    v.push(self.clone());
+                    Packet::List(v).cmp(&other)
+                }
+            }
             Packet::Num(l) => match other {
+                Packet::Nil => Ordering::Greater,
                 Packet::Num(r) => {
-                    println!("num {} {}", l, r);
                     l.cmp(r)
                 }
                 Packet::List(_) => {
@@ -31,6 +41,7 @@ impl Ord for Packet {
                 }
             }
             Packet::List(l) => match other {
+                Packet::Nil => Ordering::Greater,
                 Packet::Num(_) => {
                     let mut v = Vec::new();
                     v.push(other.clone());
@@ -41,12 +52,10 @@ impl Ord for Packet {
                         match (*a).cmp(b) {
                             Equal => continue,
                             ret => {
-                                // println!("diff\n{:?}\n{:?}\n", a, b);
                                 return ret
                             }
                         }
                     }
-                    println!("len");
                     l.len().cmp(&r.len())
                 }
             }
@@ -57,7 +66,6 @@ impl Ord for Packet {
 impl PartialOrd for Packet {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let i = self.cmp(other);
-        println!("{:?}", i);
         Some(i)
     }
 }
@@ -114,7 +122,11 @@ where
                         p.push(Packet::Num(n));
                         num.clear();
                     }
-                    Err(_) => continue,
+                    Err(_) => {
+                        if p.len() == 0 {
+                            p.push(Packet::Nil)
+                        }
+                    }
                 }
                 return Packet::List(p)
             }
@@ -137,9 +149,7 @@ fn one(input: &str) -> usize {
     let pairs: Vec<Pair> = input.split("\n\n").map(Pair::from).collect();
     
     pairs.into_iter().enumerate()
-        // .inspect(|(i, p)| println!("Testing {} {:?}", i, p))
         .filter(|(_, p)| p.is_correct())
-        // .inspect(|(i, p)| println!("Ok {} {:?}", i, p))
         .map(|(i, _)| i + 1).sum()
 }
 
@@ -206,9 +216,6 @@ const LT: &str = "\
 []
 [[]]
 
-[]
-[[2]]
-
 [[[]],1]
 [[[]],2]
 ";
@@ -246,8 +253,8 @@ const EQ: &str = "\
 ";
 
 const TT: &str = "\
-[[[],5]]
-[[[4,7,[10,10,5,9,2]],10],[0,[[1,4,1,4],[3,7,2,8,0],6,[],1],[[],[0,4,6]],[]],[[]],[2]]
+[[],5]
+[[4,7],10]
 ";
 
     #[test]
@@ -255,6 +262,7 @@ const TT: &str = "\
         let pairs: Vec<Pair> = TT.split("\n\n").map(Pair::from).collect();
         for p in pairs {
             assert_eq!(p.left.cmp(&p.right), Less);
+            assert_eq!(p.right.cmp(&p.left), Greater);
         }
     }
 
