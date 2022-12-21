@@ -84,7 +84,6 @@ fn main() {
 }
 
 fn try_move(dir: &Direction, r: &mut Rock, c: &mut Chamber, offset: usize) -> bool {
-    // println!("dir {:?} offset {}", dir, offset);
     match dir {
         Direction::Down => {
             if c.layers.len() - offset == 0 {
@@ -174,10 +173,6 @@ fn solve(input: &str, rounds: usize) -> usize {
     // println!("{}", c);
     c.layers.iter().filter(|a| **a != 0).count()
 }
-
-// fn two(input: &str) -> usize {
-
-// }
 
 #[cfg(test)]
 
