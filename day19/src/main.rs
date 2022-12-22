@@ -84,27 +84,24 @@ impl fmt::Display for State {
 
 impl State {
     fn new(time: usize) -> Self {
-        let bots = vec![1,0,0,0];
         State {
             time,
             ore: 0,
             clay: 0,
             obsidian: 0,
             geode: 0,
-            bots,
+            bots: vec![1,0,0,0]
         }
     }
 
     fn try_build(&self, r: RobotBlueprint) -> Option<Self> {
         if self.ore >= r.ore && self.clay >= r.clay && self.obsidian >= r.obsidian {
-            let state = self.gather();
-            let mut bots = self.bots.clone();
-            bots[r.bot] += 1;
+            let mut state = self.gather();
+            state.bots[r.bot] += 1;
             return Some(State {
-                ore: self.ore - r.ore,
-                clay: self.clay - r.clay,
-                obsidian: self.obsidian - r.obsidian,
-                bots,
+                ore: state.ore - r.ore,
+                clay: state.clay - r.clay,
+                obsidian: state.obsidian - r.obsidian,
                 ..state
             })
         }
@@ -136,7 +133,7 @@ fn one(input: &str) -> usize {
     for bp in blueprints {
         let mut visited = HashSet::new();
         let mut state = VecDeque::new();
-        state.push_back(State::new(24));
+        state.push_back(State::new(24 + 1));
         let mut max_geode = 0;
         let mut snr = 0;
         let max_ore = bp.ore.ore.max(bp.clay.ore).max(bp.obsidian.ore).max(bp.geode.ore);
