@@ -122,38 +122,47 @@ impl State {
 
 fn main() {
     let input = fs::read_to_string("day19/input.txt").unwrap();
-    println!("{}", one(&input));
-    // println!("{}", two(&input));
+    // println!("{}", one(&input));
+    println!("{}", two(&input));
 }
 
 fn one(input: &str) -> usize {
-    let blueprints: Vec<Blueprint> = input.lines().map(Blueprint::from).collect();
+    let blueprints: Vec<Blueprint>  = input.lines().map(Blueprint::from).collect();
+    solve(blueprints.as_slice(), 24).iter().enumerate().map(|(i, v)| (i + 1) * v).sum::<usize>()
+}
+fn two(input: &str) -> usize {
+    let blueprints: Vec<Blueprint>  = input.lines().map(Blueprint::from).collect();
+    solve(blueprints[..3.min(blueprints.len())].as_ref(), 32).iter().product::<usize>()
+}
 
-    let mut sum_geode = 0;
+fn solve(blueprints: &[Blueprint], time: usize) -> Vec<usize> {
+    let mut sum_geode = Vec::new();
     for bp in blueprints {
         let mut visited = HashSet::new();
         let mut state = VecDeque::new();
-        state.push_back(State::new(24 + 1));
+        state.push_back(State::new(time));
         let mut max_geode = 0;
         let mut snr = 0;
         let max_ore = bp.ore.ore.max(bp.clay.ore).max(bp.obsidian.ore).max(bp.geode.ore);
+        let max_clay = bp.ore.clay.max(bp.clay.clay).max(bp.obsidian.clay).max(bp.geode.clay);
+        let max_obsidian = bp.geode.obsidian;
     
         while let Some(s) = state.pop_front() {
             snr += 1;
             if !visited.insert(s.clone()) {
                 continue;
             }
+            max_geode = max_geode.max(s.geode);
             if s.time == 0 {
                 continue;
             }
-            max_geode = max_geode.max(s.geode);
             if let Some(ns) = s.try_build(bp.ore) && s.bots[Robot::Ore] < max_ore {
                 state.push_back(ns);
             }
-            if let Some(ns) = s.try_build(bp.clay) {
+            if let Some(ns) = s.try_build(bp.clay) && s.bots[Robot::Clay] < max_clay {
                 state.push_back(ns);
             }
-            if let Some(ns) = s.try_build(bp.obsidian) {
+            if let Some(ns) = s.try_build(bp.obsidian) && s.bots[Robot::Obsidian] < max_obsidian {
                 state.push_back(ns);
             }
             if let Some(ns) = s.try_build(bp.geode) {
@@ -163,15 +172,11 @@ fn one(input: &str) -> usize {
                 state.push_back(s.gather());
             }
         }
-        sum_geode += bp.id * max_geode;
+        sum_geode.push(max_geode);
         println!("bp:{} it:{} geode:{}", bp.id, snr, max_geode);
     }
     sum_geode
 }
-
-// fn two(input: &str) -> usize {
-
-// }
 
 #[cfg(test)]
 
@@ -188,8 +193,8 @@ Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsid
         assert_eq!(one(INPUT), 33);
     }
 
-    // #[test]
-    // fn test_two() {
-    //     assert_eq!(two(INPUT), );
-    // }
+    #[test]
+    fn test_two() {
+        assert_eq!(two(INPUT), 56 * 62);
+    }
 }
