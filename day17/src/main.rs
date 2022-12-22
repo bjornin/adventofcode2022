@@ -79,8 +79,8 @@ enum Direction {
 
 fn main() {
     let input = fs::read_to_string("day17/input.txt").unwrap();
-    println!("{}", solve(&input, 2022));
-    println!("{}", solve(&input, 1000000000000));
+    println!("{}", one(&input, 2022));
+    println!("{}", two(&input, 1000000000000));
 }
 
 fn try_move(dir: &Direction, r: &mut Rock, c: &mut Chamber, offset: usize) -> bool {
@@ -135,16 +135,8 @@ fn try_move(dir: &Direction, r: &mut Rock, c: &mut Chamber, offset: usize) -> bo
     false
 }
 
-fn solve(input: &str, rounds: usize) -> usize {
-    let jets: Vec<Direction> = input
-        .trim()
-        .chars()
-        .map(|c| match c {
-            '>' => Direction::Right,
-            '<' => Direction::Left,
-            _ => unimplemented!("Unknown jet char"),
-        })
-        .collect();
+fn one(input: &str, rounds: usize) -> usize {
+    let jets = parse(input);
 
     let mut c = Chamber::new();
     let mut jet_i = 0;
@@ -174,6 +166,50 @@ fn solve(input: &str, rounds: usize) -> usize {
     c.layers.iter().filter(|a| **a != 0).count()
 }
 
+fn two(input: &str, rounds: usize) -> usize {
+    let jets = parse(input);
+
+    let mut c = Chamber::new();
+    let mut jet_i = 0;
+    let mut shape_i = 0;
+    for i in 0..rounds {
+        if i % 100000 == 0 {
+            println!("round {i}");
+        }
+        c.fill_space();
+        let mut rock: Rock = Vec::from(SHAPES[shape_i]);
+        let mut rock_stopped = false;
+        let mut offset = 1;
+        let mut down = false;
+        while !rock_stopped {
+            if down {
+                rock_stopped = try_move(&Direction::Down, rock.as_mut() ,&mut c, offset);
+                offset += 1;
+            } else {
+                try_move(&jets[jet_i], rock.as_mut() ,&mut c, offset);
+                jet_i = (jet_i + 1) % jets.len();
+            }
+            down = !down;
+        }
+        shape_i = (shape_i + 1) % SHAPES.len();
+    }
+    // println!("{}", c);
+    c.layers.iter().filter(|a| **a != 0).count()
+}
+
+fn parse(input: &str) -> Vec<Direction> {
+    let jets: Vec<Direction> = input
+        .trim()
+        .chars()
+        .map(|c| match c {
+            '>' => Direction::Right,
+            '<' => Direction::Left,
+            _ => unimplemented!("Unknown jet char"),
+        })
+        .collect();
+    jets
+}
+
 #[cfg(test)]
 
 mod tests {
@@ -185,11 +221,11 @@ mod tests {
 
     #[test]
     fn test_one() {
-        assert_eq!(solve(INPUT, 2022), 3068);
+        assert_eq!(one(INPUT, 2022), 3068);
     }
 
     #[test]
     fn test_two() {
-        assert_eq!(solve(INPUT, 1000000000000), 1514285714288);
+        assert_eq!(two(INPUT, 1000000000000), 1514285714288);
     }
 }
