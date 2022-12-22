@@ -3,11 +3,12 @@ use std::{fs, collections::VecDeque};
 fn main() {
     let input = fs::read_to_string("day20/input.txt").unwrap();
     println!("{}", one(&input));
-    // println!("{}", two(&input));
+    println!("{}", two(&input));
 }
 
-fn one(input: &str) -> i32 {
-    let num = mix(input);
+fn one(input: &str) -> i64 {
+    let mut num = parse(input, 1);
+    mix(&mut num);
 
     let Some(z) = num.iter().position(|&(_, v)| v == 0) else {panic!("no z")};
     num.iter().cycle().nth(1000+z).unwrap().1 +
@@ -15,32 +16,40 @@ fn one(input: &str) -> i32 {
     num.iter().cycle().nth(3000+z).unwrap().1
 }
 
-fn mix(input: &str) -> VecDeque<(i32, i32)> {
-    let mut num: VecDeque<(i32, i32)> = input.lines().enumerate().map(|(i, x)| (i as i32, x.parse::<i32>().unwrap())).collect();
-    let num_len = num.len() as i32;
+fn two(input: &str) -> i64 {
+    let mut num = parse(input, 811589153);
+
+    for _ in 0..10 {
+        mix(&mut num);
+    }
+
+    let Some(z) = num.iter().position(|&(_, v)| v == 0) else {panic!("no z")};
+    num.iter().cycle().nth(1000+z).unwrap().1 +
+    num.iter().cycle().nth(2000+z).unwrap().1 +
+    num.iter().cycle().nth(3000+z).unwrap().1
+}
+
+fn mix(num: &mut VecDeque<(i64, i64)>) {
+    let num_len = num.len() as i64;
     for i in 0..num_len {
         let Some(e) = num.iter()
             .position(|(j,_)| *j == i) else { panic!("nope") };
         let Some(v) = num.remove(e) else { panic!("no rem") };
-    
-        // let idx = get_index(e, v, num_len);
         let ins = get_index(e, v, num_len);
-
-        // println!("moving i:{} e:{} ins:{} v:{:?}", i, e, ins, v);
         num.insert(ins as usize, v);
-        // println!("{:?}", num);
     }
+}
+
+fn parse(input: &str, key: i64) -> VecDeque<(i64, i64)> {
+    let num: VecDeque<(i64, i64)> = input.lines().enumerate()
+        .map(|(i, x)| (i as i64, key * x.parse::<i64>().unwrap())).collect();
     num
 }
 
-fn get_index(e: usize, v: (i32, i32), num_len: i32) -> i32 {
+fn get_index(e: usize, v: (i64, i64), num_len: i64) -> i64 {
     let b = num_len - 1;
-    (((e as i32 + v.1) % b) + b) % b
+    (((e as i64 + v.1) % b) + b) % b // negative modulo hack
 }
-
-// fn two(input: &str) -> usize {
-
-// }
 
 #[cfg(test)]
 
@@ -52,10 +61,10 @@ mod tests {
         assert_eq!(one(INPUT), 3);
     }
 
-    // #[test]
-    // fn test_two() {
-    //     assert_eq!(two(INPUT), );
-    // }
+    #[test]
+    fn test_two() {
+        assert_eq!(two(INPUT), 1623178306);
+    }
 
     #[test]
     fn test_index() {
