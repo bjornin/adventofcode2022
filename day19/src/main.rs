@@ -144,8 +144,6 @@ fn solve(blueprints: &[Blueprint], time: usize) -> Vec<usize> {
         let mut max_geode = 0;
         let mut snr = 0;
         let max_ore = bp.ore.ore.max(bp.clay.ore).max(bp.obsidian.ore).max(bp.geode.ore);
-        let max_clay = bp.ore.clay.max(bp.clay.clay).max(bp.obsidian.clay).max(bp.geode.clay);
-        let max_obsidian = bp.geode.obsidian;
     
         while let Some(s) = state.pop_front() {
             snr += 1;
@@ -156,16 +154,18 @@ fn solve(blueprints: &[Blueprint], time: usize) -> Vec<usize> {
             if s.time == 0 {
                 continue;
             }
-            if let Some(ns) = s.try_build(bp.ore) && s.bots[Robot::Ore] < max_ore {
-                state.push_back(ns);
-            }
-            if let Some(ns) = s.try_build(bp.clay) && s.bots[Robot::Clay] < max_clay {
-                state.push_back(ns);
-            }
-            if let Some(ns) = s.try_build(bp.obsidian) && s.bots[Robot::Obsidian] < max_obsidian {
-                state.push_back(ns);
-            }
             if let Some(ns) = s.try_build(bp.geode) {
+                state.push_back(ns);
+                continue;
+            }
+            if let Some(ns) = s.try_build(bp.clay) && s.bots[Robot::Clay] < bp.obsidian.clay {
+                state.push_back(ns);
+            }
+            if let Some(ns) = s.try_build(bp.obsidian) {
+                state.push_back(ns);
+                continue;
+            }
+            if let Some(ns) = s.try_build(bp.ore) && s.bots[Robot::Ore] < max_ore {
                 state.push_back(ns);
             }
             if s.ore <= max_ore {
